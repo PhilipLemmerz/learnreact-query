@@ -1,12 +1,42 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import Modal from '../UI/Modal.jsx';
 import EventForm from './EventForm.jsx';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { fetchEvent, updateEvent } from '../../util/http.js';
+import { queryClient } from '../../util/http.js';
 
 export default function EditEvent() {
   const navigate = useNavigate();
+  const params = useParams()
+  const id = params.id
 
-  function handleSubmit(formData) {}
+  const { data } = useQuery({
+    queryKey: ['events', params.id],
+    queryFn: ({ signal }) => fetchEvent({ signal, id })
+  })
+
+  const { mutate } = useMutation({
+    mutationFn: updateEvent,
+    onMutate: async (data) => {
+      const newEvent = data.event;
+      await queryClient.cancelQueries({ queryKey: ['events'] });
+
+      const prevEvent = queryClient.getQueryData({ queryKey: ['events'] })
+
+      queryClient.setQueryData(['events'], newEvent);
+
+      return { fallbackData: prevEvent }
+    },
+    onError: (error, data, context) => {
+      queryClient.setQueryData(['events'], context.fallbackData);
+    }
+  })
+
+  function handleSubmit(formData) {
+    mutate({ id: id, event: formData });
+    handleClose()
+  }
 
   function handleClose() {
     navigate('../');
@@ -14,7 +44,7 @@ export default function EditEvent() {
 
   return (
     <Modal onClose={handleClose}>
-      <EventForm inputData={null} onSubmit={handleSubmit}>
+      <EventForm inputData={data} onSubmit={handleSubmit}>
         <Link to="../" className="button-text">
           Cancel
         </Link>

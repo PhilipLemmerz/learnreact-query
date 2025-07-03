@@ -5,7 +5,7 @@ import { queryClient } from '../../util/http.js';
 import Modal from '../UI/Modal.jsx';
 import EventForm from './EventForm.jsx';
 import { useMutation } from '@tanstack/react-query';
-import { createNewEventHTTP } from '../../util/http.js';
+import { createNewEvent } from '../../util/http.js';
 import ErrorBlock from '../UI/ErrorBlock.jsx';
 
 
@@ -14,10 +14,10 @@ export default function NewEvent() {
   const navigate = useNavigate();
 
   const { mutate, isPending, isError, error } = useMutation({
-    mutationFn: createNewEventHTTP,
+    mutationFn: createNewEvent,
     onSuccess: () => {
-      queryClient.invalidateQueries({queryKey: ['events']}) // all queries die 'events' enthalten werden invalidiert
-      navigate('/events')                                   // > mit exact:true wird nur der exakte key invalidiert
+      queryClient.invalidateQueries({queryKey: ['events'], exact: true}) // all queries die 'events' enthalten werden invalidiert
+      navigate('/events')                                                 // > mit exact:true wird nur der exakte key invalidiert
     }
   })
 
